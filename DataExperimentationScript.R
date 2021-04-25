@@ -60,62 +60,63 @@ energyData[33][is.na(energyData[33])] <- "Unknown"
 # Create a 'Multiple' entry and correctly integrate the multiple values 
 
 getNewEntryDataFrame <- function(){
-  # print("Just Entered Function")
-  fst <- curr_block_subset[1,]
+  fst <- energyData[curr_block_inds[1], ]       
   
-  c <- c(fst$COMMUNITY_AREA_NAME, fst$CENSUS_BLOCK, "Multiple")
+  c <- c(fst$COMMUNITY_AREA_NAME, "Multiple")
   n <- c(fst$CENSUS_BLOCK)
   
   print(n)
   
   # add the mean values for each column in the subset with multiple entries for the same census block
   for(colNum in 5:57){
-    # print(colNum)
     if(colNum != 18 && colNum != 33){
-      a <- curr_block_subset[colNum]
-      vals <- a[[1,1]]
-      
-      if(nrow(a) == 2){
-        vals <- append(vals, a[[2,1]])
-      }
-      if(nrow(a) > 2){
-        for(x in 2:nrow(a)){
-          vals <- append(vals, a[[x,1]])
-        }
+      sum <- 0
+      for(rowNum in curr_block_inds){
+        sum <- sum + energyData[[rowNum, colNum]]
       }
       
-      n <- append(n, mean(vals)) 
+      n <- append(n, (sum/(length(curr_block_inds))))
     }
   }
   
-  data.frame(c[1], n[1], c[2], c[2], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], c[2],n[15],n[16],n[17],n[18],n[19],n[20],n[21],n[22],n[23],n[24],n[25],n[26],n[27],n[28], c[2], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52], n[53], n[54], n[55], n[56], n[57])
+  data.frame(c[1], n[1], c[2], c[2], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], c[2],n[15],n[16],n[17],n[18],n[19],n[20],n[21],n[22],n[23],n[24],n[25],n[26],n[27],n[28], c[2], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52])
+  
 }
 
-all_blocks <- energyData[2][[1,1]]
+
+
+all_blocks <- energyData[[1,2]]  
 for(x in 2:nrow(energyData)){
-  all_blocks <- append(all_blocks, energyData[2][[x,1]])
+  curr_val <- energyData[[x,2]]
+  if((curr_val %in% all_blocks) == FALSE){
+    all_blocks <- append(all_blocks, curr_val) 
+  }
 }
 
 
 for(curr_census_block in all_blocks){
-  curr_block_subset <- subset(energyData, CENSUS_BLOCK == curr_census_block)
-  # print("for-loop")
-  # print(curr_census_block)
-
-  if(nrow(curr_block_subset) > 1){  # Add a new row to energyData
-    # print(curr_census_block)
-
+  curr_block_inds <- which(all_blocks %in% c(curr_census_block))
+  
+  if(length(curr_block_inds) > 1){   # Add a new row to energyData
+    
     # Create a Data Frame with the values of the new entry - Step 1
     multiples_entry <- getNewEntryDataFrame()
 
     # Name the columns of the Data Frame (same as the columns in energyData) - Step 2
     names(multiples_entry) <- c("COMMUNITY_AREA_NAME","CENSUS_BLOCK","BUILDING_TYPE","BUILDING_SUBTYPE","KWH_JANUARY_2010","KWH_FEBRUARY_2010","KWH_MARCH_2010","KWH_APRIL_2010","KWH_MAY_2010","KWH_JUNE_2010","KWH_JULY_2010","KWH_AUGUST_2010","KWH_SEPTEMBER_2010","KWH_OCTOBER_2010","KWH_NOVEMBER_2010","KWH_DECEMBER_2010","TOTAL_KWH","ELECTRICITY_ACCOUNTS","ZERO_KWH_ACCOUNTS","THERM_JANUARY_2010","THERM_FEBRUARY_2010","THERM_MARCH_2010","TERM_APRIL_2010", "THERM_MAY_2010","THERM_JUNE_2010","THERM_JULY_2010","THERM_AUGUST_2010","THERM_SEPTEMBER_2010","THERM_OCTOBER_2010","THERM_NOVEMBER_2010","THERM_DECEMBER_2010","TOTAL_THERMS","GAS_ACCOUNTS","KWH_TOTAL_SQFT","THERMS_TOTAL_SQFT","KWH_MEAN_2010","KWH_MINIMUM_2010","KWH_MAXIMUM_2010","KWH_SQFT_MEAN_2010","KWH_SQFT_MINIMUM_2010","KWH_SQFT_MAXIMUM_2010","THERM_MEAN_2010","THERM_MINIMUM_2010","THERM_MAXIMUM_2010","THERMS_SQFT_MEAN_2010","THERMS_SQFT_MINIMUM_2010","THERMS_SQFT_MAXIMUM_2010","TOTAL_POPULATION","TOTAL_UNITS","AVERAGE_STORIES","AVERAGE_BUILDING_AGE","AVERAGE_HOUSESIZE","OCCUPIED_UNITS","OCCUPIED_UNITS_PERCENTAGE","RENTER_OCCUPIED_HOUSING_UNITS","RENTER_OCCUPIED_HOUSING_PERCENTAGE","OCCUPIED_HOUSING_UNITS")
-
+    
     # Using rbind() function to insert new row with "Multiple" information
     energyData <- rbind(energyData, multiples_entry)
 
   }
 }
+
+rm(all_blocks)
+rm(curr_block_inds)
+rm(curr_census_block)
+rm(multiples_entry)
+rm(curr_val)
+rm(x)
 
 
 # END OF DATA CLEANING --------------------------------------
@@ -126,6 +127,14 @@ names(Cook_county)[names(Cook_county) == "GEOID10"] <- "CENSUS_BLOCK"
 initial_area <- subset(energyData, COMMUNITY_AREA_NAME == "Near West Side")
     
 initial_map <- subset(Cook_county, CENSUS_BLOCK %in% initial_area$CENSUS_BLOCK)
+
+multiples_subset <- subset(initial_area, BUILDING_TYPE == "Multiple")
+
+# make sure to test the accuracy  of this :)
+# initial_map$TOTAL_KWH <- 0
+initial_map$TOTAL_KWH <- ifelse(initial_map$CENSUS_BLOCK %in% multiples_subset$CENSUS_BLOCK, multiples_subset$TOTAL_KWH, 0)
+
+mapview(initial_map, zcol = TOTAL_KWH)
 
 
 
@@ -182,7 +191,7 @@ initial_map <- subset(Cook_county, CENSUS_BLOCK %in% initial_area$CENSUS_BLOCK)
 
 
 
-# mapview(initial_map, zcol = "INTPTLAT10")
+
 
 
 
