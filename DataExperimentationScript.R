@@ -11,6 +11,7 @@
 library(readr)
 library(dplyr)
 library(sjmisc)
+library(viridis)
 library(tigris)
 library(mapview)
 options(scipen = 100)
@@ -58,9 +59,10 @@ energyData[18][is.na(energyData[18])] <- "Unknown"
 energyData[33][is.na(energyData[33])] <- "Unknown"
 
 # Create a 'Multiple' entry and correctly integrate the multiple values 
+# set up curr_area in order to call this function
 
 getNewEntryDataFrame <- function(){
-  fst <- energyData[curr_block_inds[1], ]       
+  fst <- curr_area[curr_block_inds[1], ]  #energyData[curr_block_inds[1], ]       
   
   c <- c(fst$COMMUNITY_AREA_NAME, "Multiple")
   n <- c(fst$CENSUS_BLOCK)
@@ -72,7 +74,7 @@ getNewEntryDataFrame <- function(){
     if(colNum != 18 && colNum != 33){
       sum <- 0
       for(rowNum in curr_block_inds){
-        sum <- sum + energyData[[rowNum, colNum]]
+        sum <- sum + curr_area[[rowNum, colNum]]      #energyData[[rowNum, colNum]]
       }
       
       n <- append(n, (sum/(length(curr_block_inds))))
@@ -82,41 +84,59 @@ getNewEntryDataFrame <- function(){
   data.frame(c[1], n[1], c[2], c[2], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], c[2],n[15],n[16],n[17],n[18],n[19],n[20],n[21],n[22],n[23],n[24],n[25],n[26],n[27],n[28], c[2], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52])
   
 }
+# 
+# # rm(all_census_blocks)
+# # rm(all_blocks)
+# 
+# all_census_blocks <- energyData[2]
+# all_blocks <- all_census_blocks[1, ]     #energyData[[1,2]]  
+# for(x in 2:nrow(energyData)){
+#   curr_val <- all_census_blocks[x, ]    #energyData[[x,2]]
+#   if((curr_val %in% all_blocks) == FALSE){             #(match(curr_val,all_blocks)) < 1){
+#     all_blocks <- append(all_blocks, curr_val) 
+#   }
+# }
+# 
+# print("The size of all_blocks:")
+# print(length(all_blocks))
+# 
+# # i <- 0
+# # j <- 0
+# for(curr_census_block in all_blocks){
+#   curr_block_inds <- which(curr_census_block %in% all_census_blocks)
+#   print(curr_census_block)
+#   print(length(curr_block_inds))
+#   print(curr_block_inds)
+#   print("-----------------")
+#   
+#   
+#   
+#   # i <- i + 1
+# 
+#   # if(length(curr_block_inds) > 1){   # Add a new row to energyData
+#   #   j <- j + 1
+#   #   print(j)
+#   # 
+#   #   # # Create a Data Frame with the values of the new entry - Step 1
+#   #   # multiples_entry <- getNewEntryDataFrame()
+#   #   #
+#   #   # # Name the columns of the Data Frame (same as the columns in energyData) - Step 2
+#   #   # names(multiples_entry) <- c("COMMUNITY_AREA_NAME","CENSUS_BLOCK","BUILDING_TYPE","BUILDING_SUBTYPE","KWH_JANUARY_2010","KWH_FEBRUARY_2010","KWH_MARCH_2010","KWH_APRIL_2010","KWH_MAY_2010","KWH_JUNE_2010","KWH_JULY_2010","KWH_AUGUST_2010","KWH_SEPTEMBER_2010","KWH_OCTOBER_2010","KWH_NOVEMBER_2010","KWH_DECEMBER_2010","TOTAL_KWH","ELECTRICITY_ACCOUNTS","ZERO_KWH_ACCOUNTS","THERM_JANUARY_2010","THERM_FEBRUARY_2010","THERM_MARCH_2010","TERM_APRIL_2010", "THERM_MAY_2010","THERM_JUNE_2010","THERM_JULY_2010","THERM_AUGUST_2010","THERM_SEPTEMBER_2010","THERM_OCTOBER_2010","THERM_NOVEMBER_2010","THERM_DECEMBER_2010","TOTAL_THERMS","GAS_ACCOUNTS","KWH_TOTAL_SQFT","THERMS_TOTAL_SQFT","KWH_MEAN_2010","KWH_MINIMUM_2010","KWH_MAXIMUM_2010","KWH_SQFT_MEAN_2010","KWH_SQFT_MINIMUM_2010","KWH_SQFT_MAXIMUM_2010","THERM_MEAN_2010","THERM_MINIMUM_2010","THERM_MAXIMUM_2010","THERMS_SQFT_MEAN_2010","THERMS_SQFT_MINIMUM_2010","THERMS_SQFT_MAXIMUM_2010","TOTAL_POPULATION","TOTAL_UNITS","AVERAGE_STORIES","AVERAGE_BUILDING_AGE","AVERAGE_HOUSESIZE","OCCUPIED_UNITS","OCCUPIED_UNITS_PERCENTAGE","RENTER_OCCUPIED_HOUSING_UNITS","RENTER_OCCUPIED_HOUSING_PERCENTAGE","OCCUPIED_HOUSING_UNITS")
+#   #   #
+#   #   # # Using rbind() function to insert new row with "Multiple" information
+#   #   # energyData <- rbind(energyData, multiples_entry)
+#   #   # print("Just Binded:")
+#   #   # print(multiples_entry)
+#   # 
+#   # }
+# }
 
-
-
-all_blocks <- energyData[[1,2]]  
-for(x in 2:nrow(energyData)){
-  curr_val <- energyData[[x,2]]
-  if((curr_val %in% all_blocks) == FALSE){
-    all_blocks <- append(all_blocks, curr_val) 
-  }
-}
-
-
-for(curr_census_block in all_blocks){
-  curr_block_inds <- which(all_blocks %in% c(curr_census_block))
-  
-  if(length(curr_block_inds) > 1){   # Add a new row to energyData
-    
-    # Create a Data Frame with the values of the new entry - Step 1
-    multiples_entry <- getNewEntryDataFrame()
-
-    # Name the columns of the Data Frame (same as the columns in energyData) - Step 2
-    names(multiples_entry) <- c("COMMUNITY_AREA_NAME","CENSUS_BLOCK","BUILDING_TYPE","BUILDING_SUBTYPE","KWH_JANUARY_2010","KWH_FEBRUARY_2010","KWH_MARCH_2010","KWH_APRIL_2010","KWH_MAY_2010","KWH_JUNE_2010","KWH_JULY_2010","KWH_AUGUST_2010","KWH_SEPTEMBER_2010","KWH_OCTOBER_2010","KWH_NOVEMBER_2010","KWH_DECEMBER_2010","TOTAL_KWH","ELECTRICITY_ACCOUNTS","ZERO_KWH_ACCOUNTS","THERM_JANUARY_2010","THERM_FEBRUARY_2010","THERM_MARCH_2010","TERM_APRIL_2010", "THERM_MAY_2010","THERM_JUNE_2010","THERM_JULY_2010","THERM_AUGUST_2010","THERM_SEPTEMBER_2010","THERM_OCTOBER_2010","THERM_NOVEMBER_2010","THERM_DECEMBER_2010","TOTAL_THERMS","GAS_ACCOUNTS","KWH_TOTAL_SQFT","THERMS_TOTAL_SQFT","KWH_MEAN_2010","KWH_MINIMUM_2010","KWH_MAXIMUM_2010","KWH_SQFT_MEAN_2010","KWH_SQFT_MINIMUM_2010","KWH_SQFT_MAXIMUM_2010","THERM_MEAN_2010","THERM_MINIMUM_2010","THERM_MAXIMUM_2010","THERMS_SQFT_MEAN_2010","THERMS_SQFT_MINIMUM_2010","THERMS_SQFT_MAXIMUM_2010","TOTAL_POPULATION","TOTAL_UNITS","AVERAGE_STORIES","AVERAGE_BUILDING_AGE","AVERAGE_HOUSESIZE","OCCUPIED_UNITS","OCCUPIED_UNITS_PERCENTAGE","RENTER_OCCUPIED_HOUSING_UNITS","RENTER_OCCUPIED_HOUSING_PERCENTAGE","OCCUPIED_HOUSING_UNITS")
-    
-    # Using rbind() function to insert new row with "Multiple" information
-    energyData <- rbind(energyData, multiples_entry)
-
-  }
-}
-
-rm(all_blocks)
-rm(curr_block_inds)
-rm(curr_census_block)
-rm(multiples_entry)
-rm(curr_val)
-rm(x)
+# rm(all_blocks)
+# rm(curr_block_inds)
+# rm(curr_census_block)
+# # rm(multiples_entry)
+# rm(curr_val)
+# rm(x)
 
 
 # END OF DATA CLEANING --------------------------------------
@@ -124,148 +144,79 @@ rm(x)
 Cook_county <- blocks(state = "IL", county = "Cook", year = 2010)
 names(Cook_county)[names(Cook_county) == "GEOID10"] <- "CENSUS_BLOCK"
 
-initial_area <- subset(energyData, COMMUNITY_AREA_NAME == "Near West Side")
-    
-initial_map <- subset(Cook_county, CENSUS_BLOCK %in% initial_area$CENSUS_BLOCK)
+curr_area <- subset(energyData, COMMUNITY_AREA_NAME == "Near West Side")
 
-multiples_subset <- subset(initial_area, BUILDING_TYPE == "Multiple")
+# Beginning of Dealing with Multiple entries -----------------------------------
 
-# make sure to test the accuracy  of this :)
-# initial_map$TOTAL_KWH <- 0
-initial_map$TOTAL_KWH <- ifelse(initial_map$CENSUS_BLOCK %in% multiples_subset$CENSUS_BLOCK, multiples_subset$TOTAL_KWH, 0)
+all_census_blocks <- curr_area[2]
+all_blocks <- all_census_blocks[1, ]     #energyData[[1,2]]
+for(x in 2:nrow(curr_area)){
+  curr_val <- all_census_blocks[x, ]    #energyData[[x,2]]
+  if((curr_val %in% all_blocks) == FALSE){             #(match(curr_val,all_blocks)) < 1){
+    all_blocks <- append(all_blocks, curr_val)
+  }
+}
 
-mapview(initial_map, zcol = TOTAL_KWH)
+print("The size of all_blocks:")
+print(length(all_blocks))
 
+# i <- 0
+# j <- 0
+for(curr_census_block in all_blocks){
+  curr_block_inds <- which(all_census_blocks$CENSUS_BLOCK == curr_census_block)#all_census_blocks %in% curr_census_block)
+  # print(curr_census_block)
+  # print(length(curr_block_inds))
+  # print(curr_block_inds)
+  # print("-----------------")
 
 
 
-# initial_area$MULTIPLE
+  # i <- i + 1
 
+  if(length(curr_block_inds) > 1){   # Add a new row to curr_area
+    # j <- j + 1
+    # print(j)
 
+    # Create a Data Frame with the values of the new entry - Step 1
+    multiples_entry <- getNewEntryDataFrame()
 
+    # Name the columns of the Data Frame (same as the columns in curr_area) - Step 2
+    names(multiples_entry) <- c("COMMUNITY_AREA_NAME","CENSUS_BLOCK","BUILDING_TYPE","BUILDING_SUBTYPE","KWH_JANUARY_2010","KWH_FEBRUARY_2010","KWH_MARCH_2010","KWH_APRIL_2010","KWH_MAY_2010","KWH_JUNE_2010","KWH_JULY_2010","KWH_AUGUST_2010","KWH_SEPTEMBER_2010","KWH_OCTOBER_2010","KWH_NOVEMBER_2010","KWH_DECEMBER_2010","TOTAL_KWH","ELECTRICITY_ACCOUNTS","ZERO_KWH_ACCOUNTS","THERM_JANUARY_2010","THERM_FEBRUARY_2010","THERM_MARCH_2010","TERM_APRIL_2010", "THERM_MAY_2010","THERM_JUNE_2010","THERM_JULY_2010","THERM_AUGUST_2010","THERM_SEPTEMBER_2010","THERM_OCTOBER_2010","THERM_NOVEMBER_2010","THERM_DECEMBER_2010","TOTAL_THERMS","GAS_ACCOUNTS","KWH_TOTAL_SQFT","THERMS_TOTAL_SQFT","KWH_MEAN_2010","KWH_MINIMUM_2010","KWH_MAXIMUM_2010","KWH_SQFT_MEAN_2010","KWH_SQFT_MINIMUM_2010","KWH_SQFT_MAXIMUM_2010","THERM_MEAN_2010","THERM_MINIMUM_2010","THERM_MAXIMUM_2010","THERMS_SQFT_MEAN_2010","THERMS_SQFT_MINIMUM_2010","THERMS_SQFT_MAXIMUM_2010","TOTAL_POPULATION","TOTAL_UNITS","AVERAGE_STORIES","AVERAGE_BUILDING_AGE","AVERAGE_HOUSESIZE","OCCUPIED_UNITS","OCCUPIED_UNITS_PERCENTAGE","RENTER_OCCUPIED_HOUSING_UNITS","RENTER_OCCUPIED_HOUSING_PERCENTAGE","OCCUPIED_HOUSING_UNITS")
 
+    # Using rbind() function to insert new row with "Multiple" information
+    curr_area <- rbind(curr_area, multiples_entry)
+    # print("Just Binded:")
+    # print(multiples_entry)
 
+  }
+}
 
-# ta <- table(initial_area$CENSUS_BLOCK)
-# initial_area[initial_area$CENSUS_BLOCK %in% names(ta)[ta > 1], ]
+# End of Dealing with Multiple entries  ----------------------------------------
 
+# current_blocks <- merge(current_blocks, curr_area, by = "CENSUS_BLOCK")
 
+multiples_subset <- subset(curr_area, BUILDING_TYPE == "Multiple")
 
+curr_area <- curr_area %>% distinct(CENSUS_BLOCK, .keep_all = TRUE)
+curr_area <- rbind(curr_area, multiples_subset)
 
-# initial_area[duplicated(initial_area$CENSUS_BLOCK) | duplicated(initial_area$CENSUS_BLOCK, fromLast=TRUE), ]
+# current_blocks <- subset(Cook_county, CENSUS_BLOCK %in% multiples_subset$CENSUS_BLOCK)
 
-# install.packages("gdata")
-# library(gdata)
-# initial_area[duplicated2(initial_area$CENSUS_BLOCK), ]
-# initial_area$CENSUS_BLOCK
+current_blocks <- subset(Cook_county, CENSUS_BLOCK %in% curr_area$CENSUS_BLOCK)
+# mapview(current_blocks)
 
+current_blocks <- merge(current_blocks, curr_area, by = "CENSUS_BLOCK")
 
-# initial_map$TOTAL_KWH <- 
 
+# Beginning of Experimentation area --------------------------------------------
 
 
+max_curr <- max(current_blocks$TOTAL_KWH)
+min_curr <- min(current_blocks$TOTAL_KWH)
+mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
 
 
 
+# End of Experimentation area --------------------------------------------------
 
-# getYearlyElectricityUsage <- function(census_block) {
-#   # block_yearly_elec_entries <- subset(energyData, CENSUS_BLOCK %in% initial_map$CENSUS_BLOCK)
-#   
-#   
-#   
-#   
-#   # block_yearly_elec_entries <- subset(energyData, CENSUS_BLOCK == census_block)
-#   # yearlyElectricityUsageValue <- mean(block_yearly_elec_entries$TOTAL_KWH)
-#   # yearlyElectricityUsageValue
-# }
 
-
-
-
-# initial_map$TOTAL_KWH 
-
-
-# yearly_entries <- getYearlyElectricityUsage(initial_map$GEOID10)
-
-
-
-
-
-
-
-
-
-
-
-# chicago_blocks <- subset(Cook_county, GEOID10 %in% energyData$CENSUS_BLOCK)
-# mapview(chicago_blocks)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# initial Experimentation Code -------------------------------------------------
-
-
-# rose_island <- blocks(state = "AS", county = "Rose Island")
-
-
-
-# AustinData <- subset(energyData, energyData$COMMUNITY_AREA_NAME == "Austin")
-
-# mapview(AustinData)
-
-# install.packages("tidycensus")
-
-# library(tidycensus)
-# census_api_key("60de26f7e16b417c84bc963d82a3d8f7f5194965", overwrite=TRUE, install = TRUE)
-# # options(tigris_use_cache = TRUE)
-# cook <- get_acs(geography = "tract",
-#                 state = "IL", county = "Cook", geometry = TRUE)
-
-# mapview(cook)
-
-
-
-# electricity_palette <- magma(n = length(unique(bavaria$employment_rate)), direction = -1)
-
-# mapview(Cook_county)
-
-
-# mapView(energyData)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Get dataset with geometry set to TRUE
-# Cook_values <- get_acs(geography = "tract", state = "IL", 
-                        # geometry = TRUE)
-
-# Map your data by the estimate column
-# mapView(Cook_values,
-        # zcol = "estimate")
