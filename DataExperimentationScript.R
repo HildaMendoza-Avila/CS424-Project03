@@ -48,9 +48,9 @@ ui <- fluidPage(
                     "Building Height",
                     "Total Population"
                   )
-      ), 
+      ) 
       # leafletOutput("mymap"),
-      mapview:::plainViewOutput("test")
+      # mapview:::plainViewOutput("test")
     ),
     
     # Main panel for displaying outputs
@@ -216,16 +216,16 @@ server <- function(input, output) {
   
   max_curr <- max(current_blocks$TOTAL_KWH)
   min_curr <- min(current_blocks$TOTAL_KWH)
-  # mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
-  
+  mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
+
   
   
   # End of Experimentation area --------------------------------------------------
   
-  
-  output$test <- mapview:::renderPlainView({
-    mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
-  })
+  # 
+  # output$test <- mapview:::renderPlainView({
+  #   
+  # })
   
 }
 
