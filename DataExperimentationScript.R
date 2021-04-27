@@ -39,7 +39,7 @@ ui <- fluidPage(
       
       # Input: Selector for choosing stateDataset ----
       selectInput(inputId = "powerDataset",
-                  label = "Choose a data filter:",
+                  label = "Please wait a min for data to process - Choose a data filter:",
                   choices = c(
                     "Gas",
                     "Electricity ",
