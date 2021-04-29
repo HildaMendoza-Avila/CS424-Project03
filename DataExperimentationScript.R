@@ -41,15 +41,14 @@ ui <- fluidPage(
       selectInput(inputId = "powerDataset",
                   label = "Please wait a min for data to process - Choose a data filter:",
                   choices = c(
-                    "Gas",
                     "Electricity ",
+                    "Gas",
                     "Building Age ",
-                    " Building Type",
+                    "Building Type",
                     "Building Height",
                     "Total Population"
                   )
       ),
-      leafletOutput("mymap")
       # mapview:::plainViewOutput("test")
     ),
     
@@ -61,6 +60,7 @@ ui <- fluidPage(
       
       # Output: Formatted text for caption ----
       h3(textOutput("caption", container = span)),
+      leafletOutput("mymap")
       
       # Output: Verbatim text for data summary ----
       # verbatimTextOutput("summary"),
@@ -124,17 +124,19 @@ server <- function(input, output) {
     c <- c(fst$COMMUNITY_AREA_NAME, "Multiple")
     n <- c(fst$CENSUS_BLOCK)
     
-    print(n)
+    # print(n)
     
     # add the mean values for each column in the subset with multiple entries for the same census block
     for(colNum in 5:57){
       if(colNum != 18 && colNum != 33){
+        # print("-----------")
         sum <- 0
         for(rowNum in curr_block_inds){
+          # print(curr_area[[rowNum, colNum]])
           sum <- sum + curr_area[[rowNum, colNum]]      #energyData[[rowNum, colNum]]
         }
         
-        n <- append(n, (sum/(length(curr_block_inds))))
+        n <- append(n, (sum))#/(length(curr_block_inds))))
       }
     }
     
@@ -160,37 +162,38 @@ server <- function(input, output) {
     }
   }
   
-  print("The size of all_blocks:")
-  print(length(all_blocks))
+  # print("The size of all_blocks:")
+  # print(length(all_blocks))
   
   # i <- 0
   # j <- 0
   for(curr_census_block in all_blocks){
-    curr_block_inds <- which(all_census_blocks$CENSUS_BLOCK == curr_census_block)#all_census_blocks %in% curr_census_block)
+    curr_block_inds <- which(all_census_blocks$CENSUS_BLOCK == curr_census_block) #all_census_blocks %in% curr_census_block)
     # print(curr_census_block)
     # print(length(curr_block_inds))
     # print(curr_block_inds)
     # print("-----------------")
-  
-  
-  
+    
+    
+    
     # i <- i + 1
-  
+    
     if(length(curr_block_inds) > 1){   # Add a new row to curr_area
+      # print(curr_block_inds)
       # j <- j + 1
       # print(j)
-  
+      
       # Create a Data Frame with the values of the new entry - Step 1
       multiples_entry <- getNewEntryDataFrame()
-  
+      
       # Name the columns of the Data Frame (same as the columns in curr_area) - Step 2
       names(multiples_entry) <- c("COMMUNITY_AREA_NAME","CENSUS_BLOCK","BUILDING_TYPE","BUILDING_SUBTYPE","KWH_JANUARY_2010","KWH_FEBRUARY_2010","KWH_MARCH_2010","KWH_APRIL_2010","KWH_MAY_2010","KWH_JUNE_2010","KWH_JULY_2010","KWH_AUGUST_2010","KWH_SEPTEMBER_2010","KWH_OCTOBER_2010","KWH_NOVEMBER_2010","KWH_DECEMBER_2010","TOTAL_KWH","ELECTRICITY_ACCOUNTS","ZERO_KWH_ACCOUNTS","THERM_JANUARY_2010","THERM_FEBRUARY_2010","THERM_MARCH_2010","TERM_APRIL_2010", "THERM_MAY_2010","THERM_JUNE_2010","THERM_JULY_2010","THERM_AUGUST_2010","THERM_SEPTEMBER_2010","THERM_OCTOBER_2010","THERM_NOVEMBER_2010","THERM_DECEMBER_2010","TOTAL_THERMS","GAS_ACCOUNTS","KWH_TOTAL_SQFT","THERMS_TOTAL_SQFT","KWH_MEAN_2010","KWH_MINIMUM_2010","KWH_MAXIMUM_2010","KWH_SQFT_MEAN_2010","KWH_SQFT_MINIMUM_2010","KWH_SQFT_MAXIMUM_2010","THERM_MEAN_2010","THERM_MINIMUM_2010","THERM_MAXIMUM_2010","THERMS_SQFT_MEAN_2010","THERMS_SQFT_MINIMUM_2010","THERMS_SQFT_MAXIMUM_2010","TOTAL_POPULATION","TOTAL_UNITS","AVERAGE_STORIES","AVERAGE_BUILDING_AGE","AVERAGE_HOUSESIZE","OCCUPIED_UNITS","OCCUPIED_UNITS_PERCENTAGE","RENTER_OCCUPIED_HOUSING_UNITS","RENTER_OCCUPIED_HOUSING_PERCENTAGE","OCCUPIED_HOUSING_UNITS")
-  
+      
       # Using rbind() function to insert new row with "Multiple" information
       curr_area <- rbind(curr_area, multiples_entry)
       # print("Just Binded:")
       # print(multiples_entry)
-  
+      
     }
   }
   
@@ -199,8 +202,23 @@ server <- function(input, output) {
   # current_blocks <- merge(current_blocks, curr_area, by = "CENSUS_BLOCK")
   
   multiples_subset <- subset(curr_area, BUILDING_TYPE == "Multiple")
+  # rm(curr_area[1,ncol(curr_area)][curr_area$BUILDING_TYPE == "Multiple"])
+  
+  curr_area <- curr_area[curr_area$BUILDING_TYPE != "Multiple", ]
+  
+  # curr_area[1:ncol(curr_area)][curr_area$BUILDING_TYPE == "Multiple"] <- NA
   
   curr_area <- curr_area %>% distinct(CENSUS_BLOCK, .keep_all = TRUE)
+  
+  all_census_blocks <- multiples_subset[2]
+  all_blocks <- all_census_blocks[1, ]    
+  for(x in 2:nrow(multiples_subset)){
+    curr_val <- all_census_blocks[x, ]   
+    all_blocks <- append(all_blocks, curr_val)
+  }
+  
+  
+  curr_area <- curr_area[!(curr_area$CENSUS_BLOCK %in% all_blocks), ]
   curr_area <- rbind(curr_area, multiples_subset)
   
   # current_blocks <- subset(Cook_county, CENSUS_BLOCK %in% multiples_subset$CENSUS_BLOCK)
@@ -212,19 +230,56 @@ server <- function(input, output) {
   
   
   # Beginning of Experimentation area --------------------------------------------
+  print("before powerSourceInput")
+  powerSourceInput <- reactive({
+    switch(input$powerDataset,
+           "Electricity " = "TOTAL_KWH",
+           "Gas"          = "TOTAL_THERMS",
+           "Building Age " = "AVERAGE_BUILDING_AGE",
+           "Building Type" = "AVERAGE_HOUSESIZE",
+           "Building Height" = "AVERAGE_STORIES",
+           "Total Population" = "TOTAL_POPULATION"
+    )})
   
-  
-  max_curr <- max(current_blocks$TOTAL_KWH)
-  min_curr <- min(current_blocks$TOTAL_KWH)
-  mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
-
-  
-  
+  # powerSourceInput <- reactive({
+  #   switch(input$powerDataset,
+  #          "Electricity " = current_blocks$TOTAL_KWH,
+  #          "Gas"          = current_blocks$TOTAL_THERMS,
+  #          "Building Age " = current_blocks$AVERAGE_BUILDING_AGE,
+  #          "Building Type" = current_blocks$AVERAGE_HOUSESIZE,
+  #          "Building Height" = current_blocks$AVERAGE_STORIES,
+  #          "Total Population" = current_blocks$TOTAL_POPULATION
+  #   )})
+  # 
+  powerSourceInfo <- function(columnName){
+    toReturn <- switch(columnName,
+           "TOTAL_KWH"            = 33,
+           "TOTAL_THERMS"          = 48,
+           "AVERAGE_BUILDING_AGE"  = 67,
+           "AVERAGE_HOUSESIZE"     = 68,
+           "AVERAGE_STORIES"       = 66,
+           "TOTAL_POPULATION"      = 64
+    )
+    # if(toReturn != 33 && toReturn != 48 && toReturn != 67 && toReturn != 68 && toReturn != 66 && toReturn != 64 == TRUE){
+    #   toReturn <- 33
+    # }
+    print(columnName)
+    print(toReturn)
+    toReturn
+  }
   # End of Experimentation area --------------------------------------------------
   
-
+  get_the_max <- function(){
+    max(current_blocks[[powerSourceInfo(powerSourceInput())]])
+  }
+  
+  get_the_min <- function(){
+    min(current_blocks[[powerSourceInfo(powerSourceInput())]])
+  }
+  
   output$mymap <- renderLeaflet({
-    mapview(current_blocks, zcol = "TOTAL_KWH", at = seq(max_curr, min_curr, -(max_curr-min_curr)/5), legend = TRUE)
+    the_map <- mapview(current_blocks, zcol = powerSourceInput(), at = seq(get_the_max(), get_the_min(), -(get_the_max()-get_the_min())/5), legend = TRUE)
+    the_map@map
   })
   
 }
